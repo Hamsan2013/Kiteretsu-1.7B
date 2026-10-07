@@ -1,0 +1,11 @@
+{
+  "architectures": ["KiterForCausalLM"],
+  "hidden_size": 896,
+  "intermediate_size": 4864,
+  "num_attention_heads": 14,
+  "num_hidden_layers": 24,
+  "num_key_value_heads": 2,
+  "vocab_size": 151936,
+  "model_type": "kiter_architecture",
+  "torch_dtype": "float16"
+}
