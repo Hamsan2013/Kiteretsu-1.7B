@@ -1,6 +1,8 @@
-  name: Build and Quantize Kiter AI GGUF
+name: Build and Quantize Kiter AI GGUF
 
 on:
+  push:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -8,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository Source Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -22,29 +24,30 @@ jobs:
           sudo apt-get install -y build-essential cmake git
           pip install huggingface_hub torch sentencepiece numpy gguf
 
-      - name: Clone and Build llama.cpp Compiler
+      - name: Clone and Build llama.cpp
         run: |
           git clone https://github.com/ggerganov/llama.cpp.git
           cd llama.cpp
           cmake -B build
           cmake --build build --config Release -j$(nproc)
 
-      - name: Fetch Target Model Weights into Isolated Directory
+      - name: Fetch Target Model Weights
         run: |
-          python3 -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download(repo_id='Qwen/Qwen2-0.5B-Instruct', local_dir='qwen_base')
-          "
+          python3 -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Qwen/Qwen2-0.5B-Instruct', local_dir='qwen_base')"
 
-      - name: Convert Target Weights to GGUF
+      - name: Convert Model to GGUF
         run: |
           python3 llama.cpp/convert_hf_to_gguf.py qwen_base/ --outfile kiter-f16.gguf
 
       - name: Quantize Model to Q4_K_M
         run: |
-          ./llama.cpp/build/bin/llama-quantize kiter-f16.gguf kiter-0.5b-q4_k_m.gguf Q4_K_M
+          if [ -f "./llama.cpp/build/bin/llama-quantize" ]; then
+            ./llama.cpp/build/bin/llama-quantize kiter-f16.gguf kiter-0.5b-q4_k_m.gguf Q4_K_M
+          else
+            ./llama.cpp/build/bin/quantize kiter-f16.gguf kiter-0.5b-q4_k_m.gguf Q4_K_M
+          fi
 
-      - name: Upload Custom Kiter GGUF Artifact
+      - name: Upload Kiter GGUF Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Kiter-0.5B-GGUF
