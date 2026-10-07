@@ -18,18 +18,18 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Build Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake git
-          pip install huggingface_hub torch sentencepiece numpy gguf
-
       - name: Clone and Build llama.cpp
         run: |
           git clone https://github.com/ggerganov/llama.cpp.git
           cd llama.cpp
           cmake -B build
           cmake --build build --config Release -j$(nproc)
+
+      - name: Install Build Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install huggingface_hub torch sentencepiece numpy gguf transformers tiktoken protobuf
+          pip install -r llama.cpp/requirements.txt
 
       - name: Fetch Target Model Weights
         run: |
